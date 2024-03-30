@@ -1,0 +1,40 @@
+version: '3.9'
+
+networks:
+  app_subnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+services:
+  workerservice:
+    build:
+      context: .
+      dockerfile: WorkerService/Dockerfile
+    environment:
+      - Seq=http://seq:80
+      - ObjectStore__Nodes__0=172.20.0.30:6379
+    depends_on:
+      - garnet
+      - seq
+    networks:
+      app_subnet:
+    
+  seq:
+    image: 'datalust/seq:latest'
+    container_name: seq
+    hostname: seq
+    ports:
+      - 5341:80
+    environment:
+      - ACCEPT_EULA=Y
+    networks:
+      app_subnet:
+
+  garnet:
+    image: 'ghcr.io/microsoft/garnet:latest'
+    container_name: 'garnet'
+    networks:
+      app_subnet:
+        ipv4_address: 172.20.0.30
